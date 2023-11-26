@@ -197,7 +197,7 @@ class MCP2515:
         self.spi.init()
         
         self.cs = Pin(csPin, Pin.OUT)
-        self.cs.high()
+        self.cs.on()
 
         self._buffer = bytearray(20)
         self._id_buffer = bytearray(4)
@@ -326,10 +326,10 @@ class MCP2515:
 
         # read from buffer
         tmp = bytearray(1)
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write_readinto(bytes([read_command]), tmp)
         self._buffer = bytearray(self.spi.read(15))
-        self.cs.high() 
+        self.cs.on() 
 
         ######### Unpack IDs/ set Extended #######
         raw_ids = unpack_from(">I", self._buffer)[0]
@@ -393,13 +393,13 @@ class MCP2515:
         #    here we are using this command to start writing to the TXBnSIDH register onwards 
         #print("\t\tID Buffer:", self._id_buffer)
         #print("\t\tdls      :", dlc)
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([tx_buffer.LOAD_CMD]))
         self.spi.write(self._id_buffer)                            # write the 4 bytes of the ID: TXBnSIDH, TXBnSIDL, TXBnEID8, TXBnEID0
         self.spi.write(bytes([dlc]))                               # write a byte to the TXBnDLC register
         if isinstance(message_obj, Message):
                 self.spi.write(message_obj.data)                   # write the data to the registers: TXBnD0-7
-        self.cs.high() 
+        self.cs.on() 
 
 
         # send the frame based on the current buffers
@@ -410,9 +410,9 @@ class MCP2515:
 
     def _start_transmit(self, tx_buffer):
         # SPI command RTS (Request to send) for the specified transmit buffer
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([tx_buffer.SEND_CMD]))
-        self.cs.high() 
+        self.cs.on() 
 
 
 
@@ -487,11 +487,11 @@ class MCP2515:
         self._load_id_buffer(can_id, extended)
 
         #tmp = bytearray(2)
-        self.cs.low() 
+        self.cs.off() 
         #self.spi.write_readinto(bytes([_WRITE, register]), tmp)
         self.spi.write(bytes([_WRITE, register]))
         self.spi.write(self._id_buffer)
-        self.cs.high() 
+        self.cs.on() 
 
         self._set_mode(current_mode)
 
@@ -534,9 +534,9 @@ class MCP2515:
         sleep(0.010)
 
     def _reset(self):
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([_RESET]))
-        self.cs.high() 
+        self.cs.on() 
         sleep(0.010)
 
     def _set_mode(self, mode):
@@ -577,9 +577,9 @@ class MCP2515:
         self._buffer[2] = mask
         self._buffer[3] = new_value
 
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([_BITMOD, register_addr, mask, new_value]))
-        self.cs.high() 
+        self.cs.on() 
 
 
     def _read_register(self, regsiter_addr):
@@ -587,20 +587,20 @@ class MCP2515:
         self._buffer[0] = _READ
         self._buffer[1] = regsiter_addr
 
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([_READ, regsiter_addr]))
         self._buffer[0] = 0
         tmp = bytearray(1)
         self.spi.write_readinto(bytes([0]), tmp)
-        self.cs.high() 
+        self.cs.on() 
         self._buffer[0] = tmp[0]
 
         return self._buffer[0]
         """
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([_READ, regsiter_addr]))
         regVal = self.spi.read(1)
-        self.cs.high()
+        self.cs.on()
 
         return int.from_bytes(regVal, 'big')
 
@@ -610,26 +610,26 @@ class MCP2515:
     def _read_status(self):
         """
         self._buffer[0] = _READ_STATUS
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([_READ_STATUS]))
         var = self.spi.read(1)
-        self.cs.high() 
+        self.cs.on() 
         self._buffer[0] = var[0]
         return self._buffer[0]
         """
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([_READ_STATUS]))
         regVal = self.spi.read(1)
-        self.cs.high()
+        self.cs.on()
 
         return int.from_bytes(regVal, 'big')
         
 
 
     def _set_register(self, regsiter_addr, register_value):
-        self.cs.low() 
+        self.cs.off() 
         self.spi.write(bytes([_WRITE, regsiter_addr, register_value]))
-        self.cs.high()
+        self.cs.on()
 
 
     def _get_bus_status(self):
